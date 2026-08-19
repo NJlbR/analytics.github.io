@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>СоциоПары — исследование привлекательности</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Демографическое исследование</p>
+        <h1>СоциоПары</h1>
+      </div>
+      <nav id="nav" class="nav"></nav>
+    </header>
+
+    <main>
+      <section class="hero card">
+        <div>
+          <h2>Анонимная статистика симпатий</h2>
+          <p>
+            Регистрируйтесь по уникальному username в стиле Telegram, отмечайте признаки людей,
+            которые вам понравились, и смотрите личные и общие усреднённые результаты.
+          </p>
+        </div>
+        <button id="likeButton" class="primary">Мне кто-то понравился</button>
+      </section>
+
+      <section id="authSection" class="grid two"></section>
+      <section id="profileSection" class="hidden"></section>
+      <section id="surveySection" class="hidden"></section>
+      <section id="adminSection" class="hidden"></section>
+    </main>
+
+    <template id="authTemplate">
+      <article class="card">
+        <h2>Регистрация</h2>
+        <form id="registerForm" class="form">
+          <label>Username
+            <input name="username" autocomplete="username" placeholder="example123" required />
+          </label>
+          <label>Пол
+            <select name="gender" required>
+              <option value="">Выберите</option>
+              <option value="female">Женский</option>
+              <option value="male">Мужской</option>
+            </select>
+          </label>
+          <button class="primary" type="submit">Создать аккаунт</button>
+          <p class="hint">Первый зарегистрированный пользователь автоматически становится админом.</p>
+        </form>
+      </article>
+      <article class="card">
+        <h2>Вход</h2>
+        <form id="loginForm" class="form">
+          <label>Username
+            <input name="username" autocomplete="username" placeholder="example123" required />
+          </label>
+          <button class="secondary" type="submit">Войти</button>
+          <p class="hint">Пароль не используется: это учебный прототип для GitHub Pages.</p>
+        </form>
+      </article>
+    </template>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
