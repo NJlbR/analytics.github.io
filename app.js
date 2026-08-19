@@ -62,46 +62,6 @@ function statsMarkup(surveys) {
   `).join('')}</div>`;
 }
 
-function dateKey(dateString) {
-  return new Date(dateString).toISOString().slice(0, 10);
-}
-
-function formatDate(dateString) {
-  return new Date(`${dateString}T00:00:00`).toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
-function dailyCounts(surveys) {
-  const counts = surveys.reduce((acc, survey) => {
-    const day = dateKey(survey.createdAt);
-    acc[day] = (acc[day] || 0) + 1;
-    return acc;
-  }, {});
-
-  return Object.entries(counts)
-    .sort(([dayA], [dayB]) => dayB.localeCompare(dayA))
-    .map(([day, count]) => ({ day, count }));
-}
-
-function averageLikesPerDay(surveys) {
-  const days = dailyCounts(surveys);
-  if (!days.length) return '—';
-  const total = days.reduce((sum, { count }) => sum + count, 0);
-  return (total / days.length).toFixed(1);
-}
-
-function dailyStatsMarkup(surveys) {
-  const days = dailyCounts(surveys);
-  if (!days.length) return '<p>Записей пока нет.</p>';
-
-  return `<div class="table-wrap"><table><thead><tr><th>День</th><th>Добавлено понравившихся</th></tr></thead><tbody>${days.map(({ day, count }) => `
-    <tr><td>${formatDate(day)}</td><td><strong>${count}</strong></td></tr>
-  `).join('')}</tbody></table></div>`;
-}
-
 function renderNav(user) {
   document.querySelector('#nav').innerHTML = user
     ? `<strong>@${user.username}</strong>${user.isAdmin ? '<button id="adminButton" class="secondary">Админ-панель</button>' : ''}<button id="logoutButton" class="ghost">Выйти</button>`
@@ -135,11 +95,6 @@ function renderProfile(state, user) {
     <article class="card">
       <h2>Кто вам нравился чаще всего</h2>
       ${statsMarkup(surveys)}
-    </article>
-    <article class="card">
-      <h2>Статистика добавления по дням</h2>
-      <p>Сколько анкет «понравившихся» вы добавили в каждый день.</p>
-      ${dailyStatsMarkup(surveys)}
     </article>
     <article class="card">
       <h2>Ваши заполненные анкеты</h2>
@@ -179,7 +134,7 @@ function renderSurvey(user) {
 function renderAdmin(state, user) {
   const section = document.querySelector('#adminSection');
   section.classList.add('hidden');
-  section.innerHTML = user?.isAdmin ? `<article class="card"><h2>Админ-панель</h2><p>Усреднённые данные по всем аккаунтам, включая администратора.</p>${statsMarkup(state.surveys)}<div class="stats daily-summary"><div class="stat"><span>Среднее понравившихся в день</span><strong>${averageLikesPerDay(state.surveys)}</strong></div></div><h3>Все анкеты</h3>${tableMarkup(state.surveys)}</article>` : '';
+  section.innerHTML = user?.isAdmin ? `<article class="card"><h2>Админ-панель</h2><p>Усреднённые данные по всем аккаунтам, включая администратора.</p>${statsMarkup(state.surveys)}${tableMarkup(state.surveys)}</article>` : '';
 }
 
 function render() {
