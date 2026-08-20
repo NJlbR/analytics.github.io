@@ -1,15 +1,19 @@
-const STORAGE_KEY = 'sociopairs.v1';
+const STORAGE_KEY = 'sociopairs.v2';
+const LEGACY_STORAGE_KEY = 'sociopairs.v1';
+const CURRENT_USER_KEY = 'sociopairs.currentUser';
 const USERNAME_RE = /^[A-Za-z][A-Za-z0-9]*$/;
 
 const genderLabels = { female: 'Женский', male: 'Мужской' };
 const oppositeGender = { female: 'male', male: 'female' };
 const hairOptions = ['короткие', 'до плеч', 'от плеч до пояса', 'ниже пояса'];
 const eyeOptions = ['карие', 'голубые', 'зелёные', 'серые', 'ореховые', 'другой'];
+const todayKey = (date = new Date()) => date.toISOString().slice(0, 10);
 
-let currentUser = localStorage.getItem('sociopairs.currentUser') || '';
+let currentUser = localStorage.getItem(CURRENT_USER_KEY) || '';
 
 function loadState() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"users":[],"surveys":[]}');
+  const stored = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+  return JSON.parse(stored || '{"users":[],"surveys":[]}');
 }
 
 function saveState(state) {
@@ -18,8 +22,8 @@ function saveState(state) {
 
 function setCurrentUser(username) {
   currentUser = username;
-  if (username) localStorage.setItem('sociopairs.currentUser', username);
-  else localStorage.removeItem('sociopairs.currentUser');
+  if (username) localStorage.setItem(CURRENT_USER_KEY, username);
+  else localStorage.removeItem(CURRENT_USER_KEY);
   render();
 }
 
@@ -36,6 +40,12 @@ function average(values) {
   return nums.length ? Math.round(nums.reduce((sum, value) => sum + value, 0) / nums.length) : '—';
 }
 
+function averageDecimal(values, precision = 1) {
+  const nums = values.map(Number).filter(Number.isFinite);
+  if (!nums.length) return '—';
+  return (nums.reduce((sum, value) => sum + value, 0) / nums.length).toFixed(precision).replace('.0', '');
+}
+
 function mode(values) {
   const counts = values.filter(Boolean).reduce((acc, value) => {
     acc[value] = (acc[value] || 0) + 1;
@@ -45,11 +55,55 @@ function mode(values) {
   return winner ? `${winner[0]} (${winner[1]})` : '—';
 }
 
+function rangeLabel(min, max, unit = '') {
+  if (!min && !max) return '—';
+  if (min && max) return `${min}–${max}${unit}`;
+  return min ? `от ${min}${unit}` : `до ${max}${unit}`;
+}
+
+function displayAge(survey) {
+  return survey.age || rangeLabel(survey.ageMin, survey.ageMax);
+}
+
+function displayHeight(survey) {
+  return survey.height || rangeLabel(survey.heightMin, survey.heightMax, ' см');
+}
+
+function numericCenter(survey, singleKey, minKey, maxKey) {
+  if (Number.isFinite(Number(survey[singleKey]))) return Number(survey[singleKey]);
+  const min = Number(survey[minKey]);
+  const max = Number(survey[maxKey]);
+  if (Number.isFinite(min) && Number.isFinite(max)) return (min + max) / 2;
+  if (Number.isFinite(min)) return min;
+  if (Number.isFinite(max)) return max;
+  return NaN;
+}
+
+function dailyCounts(surveys) {
+  return surveys.reduce((acc, survey) => {
+    const day = todayKey(new Date(survey.createdAt));
+    acc[day] = (acc[day] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function dailyStatsMarkup(surveys) {
+  const rows = Object.entries(dailyCounts(surveys)).sort((a, b) => b[0].localeCompare(a[0]));
+  if (!rows.length) return '<p>Пока нет добавленных симпатий.</p>';
+  return `<div class="table-wrap"><table><thead><tr><th>День</th><th>Добавлено понравившихся</th></tr></thead><tbody>${rows.map(([day, count]) => `<tr><td>${day}</td><td>${count}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function averageLikesPerUserPerDay(state) {
+  const days = Object.keys(dailyCounts(state.surveys));
+  if (!state.users.length || !days.length) return '—';
+  return averageDecimal(days.map((day) => state.surveys.filter((survey) => todayKey(new Date(survey.createdAt)) === day).length / state.users.length));
+}
+
 function statsFor(surveys) {
   return [
     ['Анкет', surveys.length],
-    ['Средний возраст', average(surveys.map((survey) => survey.age))],
-    ['Средний рост', average(surveys.map((survey) => survey.height))],
+    ['Средний возраст', average(surveys.map((survey) => numericCenter(survey, 'age', 'ageMin', 'ageMax')))],
+    ['Средний рост', average(surveys.map((survey) => numericCenter(survey, 'height', 'heightMin', 'heightMax')))],
     ['Частая длина волос', mode(surveys.map((survey) => survey.hairLength))],
     ['Частый цвет глаз', mode(surveys.map((survey) => survey.eyeColor))],
     ['Частый стиль', mode(surveys.map((survey) => survey.style || 'не указан'))],
@@ -97,14 +151,19 @@ function renderProfile(state, user) {
       ${statsMarkup(surveys)}
     </article>
     <article class="card">
+      <h2>Ваша статистика по дням</h2>
+      ${dailyStatsMarkup(surveys)}
+    </article>
+    <article class="card">
       <h2>Ваши заполненные анкеты</h2>
       ${surveys.length ? tableMarkup(surveys) : '<p>Анкет пока нет.</p>'}
     </article>`;
 }
 
 function tableMarkup(surveys) {
+  if (!surveys.length) return '<p>Анкет пока нет.</p>';
   return `<div class="table-wrap"><table><thead><tr><th>Дата</th><th>Пол</th><th>Возраст</th><th>Рост</th><th>Волосы</th><th>Глаза</th><th>Стиль</th><th>Заметки</th></tr></thead><tbody>${surveys.map((survey) => `
-    <tr><td>${new Date(survey.createdAt).toLocaleString('ru-RU')}</td><td>${genderLabels[survey.targetGender]}</td><td>${survey.age}</td><td>${survey.height}</td><td>${survey.hairLength}</td><td>${survey.eyeColor}</td><td>${survey.style || '—'}</td><td>${survey.notes || '—'}</td></tr>
+    <tr><td>${new Date(survey.createdAt).toLocaleString('ru-RU')}</td><td>${genderLabels[survey.targetGender]}</td><td>${displayAge(survey)}</td><td>${displayHeight(survey)}</td><td>${survey.hairLength}</td><td>${survey.eyeColor}</td><td>${survey.style || '—'}</td><td>${survey.notes || '—'}</td></tr>
   `).join('')}</tbody></table></div>`;
 }
 
@@ -119,8 +178,8 @@ function renderSurvey(user) {
       <form id="surveyForm" class="form">
         <input type="hidden" name="targetGender" value="${targetGender}" />
         <div class="grid two">
-          <label>Возраст <input name="age" type="number" min="16" max="99" required /></label>
-          <label>Рост, см <input name="height" type="number" min="120" max="230" required /></label>
+          <fieldset><legend>Возраст</legend><div class="range-row"><label>От <input name="ageMin" type="number" min="16" max="99" required /></label><label>До <input name="ageMax" type="number" min="16" max="99" required /></label></div></fieldset>
+          <fieldset><legend>Рост, см</legend><div class="range-row"><label>От <input name="heightMin" type="number" min="120" max="230" required /></label><label>До <input name="heightMax" type="number" min="120" max="230" required /></label></div></fieldset>
           <label>Длина волос <select name="hairLength" required>${hairOptions.map((option) => `<option>${option}</option>`).join('')}</select></label>
           <label>Цвет глаз <select name="eyeColor" required>${eyeOptions.map((option) => `<option>${option}</option>`).join('')}</select></label>
         </div>
@@ -134,7 +193,7 @@ function renderSurvey(user) {
 function renderAdmin(state, user) {
   const section = document.querySelector('#adminSection');
   section.classList.add('hidden');
-  section.innerHTML = user?.isAdmin ? `<article class="card"><h2>Админ-панель</h2><p>Усреднённые данные по всем аккаунтам, включая администратора.</p>${statsMarkup(state.surveys)}${tableMarkup(state.surveys)}</article>` : '';
+  section.innerHTML = user?.isAdmin ? `<article class="card"><h2>Админ-панель</h2><p>Усреднённые данные по всем аккаунтам, включая администратора.</p>${statsMarkup(state.surveys)}<div class="stats"><div class="stat"><span>Среднее число понравившихся в день на пользователя</span><strong>${averageLikesPerUserPerDay(state)}</strong></div></div><h3>Сколько понравившихся добавляли по дням</h3>${dailyStatsMarkup(state.surveys)}<h3>Все анкеты</h3>${tableMarkup(state.surveys)}</article>` : '';
 }
 
 function render() {
@@ -146,6 +205,14 @@ function render() {
   renderProfile(state, user);
   renderSurvey(user);
   renderAdmin(state, user);
+}
+
+function validateRange(min, max, label) {
+  if (Number(min) > Number(max)) {
+    alert(`${label}: значение «от» не может быть больше значения «до».`);
+    return false;
+  }
+  return true;
 }
 
 document.addEventListener('submit', (event) => {
@@ -180,7 +247,8 @@ document.addEventListener('submit', (event) => {
   }
 
   if (form.id === 'surveyForm') {
-    state.surveys.push({ ...data, age: Number(data.age), height: Number(data.height), author: currentUser, createdAt: new Date().toISOString() });
+    if (!validateRange(data.ageMin, data.ageMax, 'Возраст') || !validateRange(data.heightMin, data.heightMax, 'Рост')) return;
+    state.surveys.push({ ...data, ageMin: Number(data.ageMin), ageMax: Number(data.ageMax), heightMin: Number(data.heightMin), heightMax: Number(data.heightMax), author: currentUser, createdAt: new Date().toISOString() });
     saveState(state);
     alert('Анкета сохранена.');
     render();

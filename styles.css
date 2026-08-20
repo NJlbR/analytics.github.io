@@ -31,6 +31,9 @@ p { color: var(--muted); line-height: 1.55; }
 .form { display: grid; gap: 14px; }
 label { display: grid; gap: 7px; color: #2c3548; font-weight: 650; }
 input, select { width: 100%; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font: inherit; background: white; }
+fieldset { border: 1px solid var(--line); border-radius: 18px; padding: 14px; margin: 0; }
+legend { padding: 0 6px; color: #2c3548; font-weight: 750; }
+.range-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 button { border: 0; border-radius: 999px; padding: 12px 18px; font-weight: 750; cursor: pointer; transition: .2s ease; }
 button:hover { transform: translateY(-1px); }
 .primary { background: var(--accent); color: white; }
