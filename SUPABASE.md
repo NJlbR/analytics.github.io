@@ -1,0 +1,34 @@
+# Supabase setup
+
+The site can use Supabase as shared storage while keeping browser `localStorage` as a fallback for local/demo use.
+
+## 1. Create the database schema
+
+1. Open your Supabase project.
+2. Go to **SQL Editor**.
+3. Run the full contents of `supabase-schema.sql`.
+
+## 2. Add repository secrets
+
+Open the GitHub repository and go to **Settings → Secrets and variables → Actions → Repository secrets**.
+
+Add exactly these secrets:
+
+- `supabase_url` — the Supabase **Project URL** from **Project Settings → API**.
+- `supabase_anonpublic` — the Supabase **anon public** key from **Project Settings → API**.
+
+Do not add or expose the `service_role` key. It bypasses Row Level Security and must never be delivered to a browser.
+
+## 3. Deploy with GitHub Actions
+
+Because repository secrets are only available to workflows, GitHub Pages must use the workflow in `.github/workflows/deploy-pages.yml` rather than **Deploy from a branch**.
+
+1. Open **Settings → Pages**.
+2. Set **Build and deployment → Source** to **GitHub Actions**.
+3. Push to `main` or run **Deploy GitHub Pages** manually from the **Actions** tab.
+
+The workflow generates `supabase-config.js` during deployment from `supabase_url` and `supabase_anonpublic`, uploads the static artifact, and deploys it to Pages.
+
+## Local development
+
+For local testing only, copy `supabase-config.example.js` to `supabase-config.js` and fill in your Project URL and anon public key. The real `supabase-config.js` is ignored by Git.
