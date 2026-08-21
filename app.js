@@ -108,19 +108,13 @@ function tableMarkup(surveys) { if (!surveys.length) return '<p>Анкет по�
 function renderSurvey(user) { const section = document.querySelector('#surveySection'); section.classList.add('hidden'); if (!user) return; const targetGender = oppositeGender[user.gender]; section.innerHTML = `<article class="card"><h2>Анкета симпатии: ${genderLabels[targetGender]}</h2><form id="surveyForm" class="form"><input type="hidden" name="targetGender" value="${targetGender}" /><div class="grid two"><fieldset><legend>Возраст</legend><div class="range-row"><label>От <input name="ageMin" type="number" min="16" max="99" required /></label><label>До <input name="ageMax" type="number" min="16" max="99" required /></label></div></fieldset><fieldset><legend>Рост, см</legend><div class="range-row"><label>От <input name="heightMin" type="number" min="120" max="230" required /></label><label>До <input name="heightMax" type="number" min="120" max="230" required /></label></div></fieldset><label>Длина волос <select name="hairLength" required>${hairOptions.map((option) => `<option>${option}</option>`).join('')}</select></label><label>Цвет глаз <select name="eyeColor" required>${eyeOptions.map((option) => `<option>${option}</option>`).join('')}</select></label></div><label>Стиль / субкультура <input name="style" maxlength="80" placeholder="например: casual, goth, sport" /></label><label>Дополнительные наблюдения <input name="notes" maxlength="160" placeholder="необязательно" /></label><button class="primary" type="submit">Сохранить анкету</button></form></article>`; }
 function renderAdmin(state, user) { const section = document.querySelector('#adminSection'); section.classList.add('hidden'); section.innerHTML = user?.isAdmin ? `<article class="card"><h2>Админ-панель</h2><p>Усреднённые данные по всем аккаунтам, включая администратора.</p>${statsMarkup(state.surveys)}<div class="stats"><div class="stat"><span>Среднее число понравившихся в день на пользователя</span><strong>${averageLikesPerUserPerDay(state)}</strong></div></div><h3>Сколько понравившихся добавляли по дням</h3>${dailyStatsMarkup(state.surveys)}<h3>Все анкеты</h3>${tableMarkup(state.surveys)}</article>` : ''; }
 
-function supabaseProjectHost() {
-  try { return new URL(supabaseSettings.url).host; }
-  catch { return 'неизвестный Supabase URL'; }
-}
-
 function storageErrorMessage(error) {
-  const projectHint = `Сайт сейчас подключён к ${supabaseProjectHost()}. Если SQL-файл уже выполнен, проверьте, что repository secrets supabase_url и supabase_anonpublic взяты из этого же Supabase-проекта, затем заново запустите деплой GitHub Pages.`;
-  const setupHint = `Откройте именно этот проект в Supabase → SQL Editor, выполните весь файл supabase-schema.sql, затем обновите страницу. ${projectHint}`;
+  const setupHint = 'Откройте Supabase → SQL Editor, выполните весь файл supabase-schema.sql, затем обновите страницу.';
   if (error?.code === 'PGRST205' || error?.message?.includes('schema cache') || error?.message?.includes('sociopairs_users')) {
-    return `PostgREST не видит таблицы sociopairs в подключённом проекте. ${setupHint}`;
+    return `Таблицы Supabase ещё не созданы или не попали в schema cache. ${setupHint}`;
   }
   if (error?.code === '42501' || error?.message?.toLowerCase().includes('permission')) {
-    return `У anon key нет прав на таблицы. Выполните актуальный supabase-schema.sql целиком. ${projectHint}`;
+    return `У anon key нет прав на таблицы. Выполните актуальный supabase-schema.sql целиком. ${setupHint}`;
   }
   return error?.message || 'Неизвестная ошибка Supabase.';
 }

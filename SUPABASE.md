@@ -7,7 +7,6 @@ The site can use Supabase as shared storage while keeping browser `localStorage`
 1. Open your Supabase project.
 2. Go to **SQL Editor**.
 3. Run the full contents of `supabase-schema.sql`. The last line reloads the PostgREST schema cache, which fixes the Supabase error `Could not find the table ... in the schema cache` after new tables are created.
-4. If the site still says the tables are missing after you ran the script, compare the project URL shown in the site error with **Project Settings → API → Project URL**. The `supabase_url` and `supabase_anonpublic` repository secrets must come from that exact same Supabase project, and Pages must be redeployed after changing either secret.
 
 ## 2. Add repository secrets
 
