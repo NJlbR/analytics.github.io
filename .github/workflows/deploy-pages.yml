@@ -25,13 +25,32 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create Supabase config from repository secrets
+        env:
+          SUPABASE_URL: ${{ secrets.supabase_url }}
+          SUPABASE_ANON_KEY: ${{ secrets.supabase_anonpublic }}
         run: |
-          cat > supabase-config.js <<'CONFIG'
-          window.SOCIOPAIRS_SUPABASE = {
-            url: '${{ secrets.supabase_url }}',
-            anonKey: '${{ secrets.supabase_anonpublic }}',
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Repository secrets supabase_url and supabase_anonpublic must be configured." >&2
+            exit 1
+          fi
+
+          node <<'NODE'
+          const fs = require('node:fs');
+          const config = {
+            url: process.env.SUPABASE_URL,
+            anonKey: process.env.SUPABASE_ANON_KEY,
           };
-          CONFIG
+          const configScript = `window.SOCIOPAIRS_SUPABASE = ${JSON.stringify(config, null, 2)};`;
+          fs.writeFileSync('supabase-config.js', `${configScript}\n`);
+
+          const indexPath = 'index.html';
+          const index = fs.readFileSync(indexPath, 'utf8');
+          const placeholder = '<script id="supabase-config">window.SOCIOPAIRS_SUPABASE = window.SOCIOPAIRS_SUPABASE || {};</script>';
+          if (!index.includes(placeholder)) {
+            throw new Error('Supabase config placeholder was not found in index.html');
+          }
+          fs.writeFileSync(indexPath, index.replace(placeholder, `<script id="supabase-config">${configScript}</script>`));
+          NODE
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
