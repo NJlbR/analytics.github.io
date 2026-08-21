@@ -6,7 +6,7 @@ The site can use Supabase as shared storage while keeping browser `localStorage`
 
 1. Open your Supabase project.
 2. Go to **SQL Editor**.
-3. Run the full contents of `supabase-schema.sql`.
+3. Run the full contents of `supabase-schema.sql`. The last line reloads the PostgREST schema cache, which fixes the Supabase error `Could not find the table ... in the schema cache` after new tables are created.
 
 ## 2. Add repository secrets
 

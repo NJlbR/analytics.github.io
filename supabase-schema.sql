@@ -1,4 +1,6 @@
--- Run this SQL in Supabase SQL Editor before enabling the site integration.
+-- Run this complete script in Supabase SQL Editor.
+-- It creates the tables expected by app.js and refreshes PostgREST's schema cache.
+
 create table if not exists public.sociopairs_users (
   username text primary key,
   gender text not null check (gender in ('female', 'male')),
@@ -16,28 +18,41 @@ create table if not exists public.sociopairs_surveys (
   height_max integer not null check (height_max between 120 and 230),
   hair_length text not null,
   eye_color text not null,
-  style text,
-  notes text,
-  created_at timestamptz not null default now()
+  style text check (style is null or char_length(style) <= 80),
+  notes text check (notes is null or char_length(notes) <= 160),
+  created_at timestamptz not null default now(),
+  check (age_min <= age_max),
+  check (height_min <= height_max)
 );
+
+create index if not exists sociopairs_surveys_author_idx on public.sociopairs_surveys(author);
+create index if not exists sociopairs_surveys_created_at_idx on public.sociopairs_surveys(created_at desc);
 
 alter table public.sociopairs_users enable row level security;
 alter table public.sociopairs_surveys enable row level security;
+
+grant usage on schema public to anon, authenticated;
+grant select, insert, update on public.sociopairs_users to anon, authenticated;
+grant select, insert on public.sociopairs_surveys to anon, authenticated;
+grant usage, select on all sequences in schema public to anon, authenticated;
 
 -- GitHub Pages is fully client-side, so only the anon key should be exposed.
 -- These policies allow the app to read/write research data while table constraints
 -- prevent malformed rows. Do not expose private personal data with these policies.
 drop policy if exists "sociopairs_users_select" on public.sociopairs_users;
-create policy "sociopairs_users_select" on public.sociopairs_users for select to anon using (true);
+create policy "sociopairs_users_select" on public.sociopairs_users for select to anon, authenticated using (true);
 
 drop policy if exists "sociopairs_users_insert" on public.sociopairs_users;
-create policy "sociopairs_users_insert" on public.sociopairs_users for insert to anon with check (true);
+create policy "sociopairs_users_insert" on public.sociopairs_users for insert to anon, authenticated with check (true);
 
 drop policy if exists "sociopairs_users_update_gender" on public.sociopairs_users;
-create policy "sociopairs_users_update_gender" on public.sociopairs_users for update to anon using (true) with check (true);
+create policy "sociopairs_users_update_gender" on public.sociopairs_users for update to anon, authenticated using (true) with check (true);
 
 drop policy if exists "sociopairs_surveys_select" on public.sociopairs_surveys;
-create policy "sociopairs_surveys_select" on public.sociopairs_surveys for select to anon using (true);
+create policy "sociopairs_surveys_select" on public.sociopairs_surveys for select to anon, authenticated using (true);
 
 drop policy if exists "sociopairs_surveys_insert" on public.sociopairs_surveys;
-create policy "sociopairs_surveys_insert" on public.sociopairs_surveys for insert to anon with check (true);
+create policy "sociopairs_surveys_insert" on public.sociopairs_surveys for insert to anon, authenticated with check (true);
+
+-- Fixes "Could not find the table ... in the schema cache" right after creating tables.
+notify pgrst, 'reload schema';
