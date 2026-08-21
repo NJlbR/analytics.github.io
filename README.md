@@ -21,7 +21,7 @@
 
 ## Деплой на GitHub Pages
 
-Сайт публикуется через GitHub Actions, потому что `supabase-config.js` создаётся из repository secrets во время деплоя:
+Сайт теперь публикуется через GitHub Actions, потому что `supabase-config.js` создаётся из repository secrets во время деплоя. Это заменяет режим **Deploy from a branch**:
 
 1. Откройте **Settings → Pages** в репозитории.
 2. В блоке **Build and deployment** выберите **GitHub Actions**.

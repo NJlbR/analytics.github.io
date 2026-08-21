@@ -2,7 +2,7 @@
 
 This repository is a static GitHub Pages site: `index.html`, `app.js`, `styles.css`, and `.nojekyll` live at the repository root. `supabase-config.js` is generated during deployment from repository secrets.
 
-To publish with repository secrets:
+To publish with repository secrets, use GitHub Actions instead of **Deploy from a branch**:
 
 1. Open **Settings → Secrets and variables → Actions** in the GitHub repository.
 2. Add `supabase_url` with the Supabase Project URL.
