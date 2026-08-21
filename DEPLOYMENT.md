@@ -1,6 +1,6 @@
 # GitHub Pages deployment
 
-This repository is a static GitHub Pages site: `index.html`, `app.js`, `styles.css`, and `.nojekyll` live at the repository root.
+This repository is a static GitHub Pages site: `index.html`, `app.js`, `styles.css`, `supabase-config.js`, and `.nojekyll` live at the repository root.
 
 To publish without a custom workflow:
 
@@ -11,6 +11,8 @@ To publish without a custom workflow:
 
 The `.nojekyll` file disables Jekyll processing so GitHub Pages serves the static files as-is.
 
-## Data model caveat
+## Supabase data storage
 
-The app is a client-side prototype. Users, username uniqueness checks, survey answers, and aggregate statistics are stored in the current browser's `localStorage`. A real multi-user research deployment needs a shared backend database or backend-as-a-service.
+Before deploying with shared storage, run `supabase-schema.sql` in **Supabase → SQL Editor**. Then open **Project Settings → API** and copy the **Project URL** and **anon public** key into `supabase-config.js`.
+
+Never place a Supabase `service_role` key in this repository or in any browser-delivered file. If `supabase-config.js` is left blank, the app falls back to browser `localStorage` for local testing.
