@@ -40,16 +40,10 @@ jobs:
             url: process.env.SUPABASE_URL,
             anonKey: process.env.SUPABASE_ANON_KEY,
           };
-          const configScript = `window.SOCIOPAIRS_SUPABASE = ${JSON.stringify(config, null, 2)};`;
-          fs.writeFileSync('supabase-config.js', `${configScript}\n`);
-
-          const indexPath = 'index.html';
-          const index = fs.readFileSync(indexPath, 'utf8');
-          const placeholder = '<script id="supabase-config">window.SOCIOPAIRS_SUPABASE = window.SOCIOPAIRS_SUPABASE || {};</script>';
-          if (!index.includes(placeholder)) {
-            throw new Error('Supabase config placeholder was not found in index.html');
-          }
-          fs.writeFileSync(indexPath, index.replace(placeholder, `<script id="supabase-config">${configScript}</script>`));
+          fs.writeFileSync(
+            'supabase-config.js',
+            `window.SOCIOPAIRS_SUPABASE = ${JSON.stringify(config, null, 2)};\n`,
+          );
           NODE
 
       - name: Configure Pages
