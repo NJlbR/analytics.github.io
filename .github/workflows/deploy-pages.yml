@@ -24,6 +24,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Apply Supabase schema when database secret exists
+        env:
+          SUPABASE_DB_URL: ${{ secrets.supabase_db_url }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "Repository secret supabase_db_url is not configured; skipping automatic schema setup. Run supabase-schema.sql manually in Supabase SQL Editor."
+            exit 0
+          fi
+
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase-schema.sql
+
       - name: Create Supabase config from repository secrets
         env:
           SUPABASE_URL: ${{ secrets.supabase_url }}
