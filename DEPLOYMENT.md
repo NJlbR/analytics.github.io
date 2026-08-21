@@ -16,12 +16,12 @@ The `.nojekyll` file disables Jekyll processing so GitHub Pages serves the stati
 
 ## Supabase data storage
 
-Before deploying with shared storage, add these repository secrets in **Settings → Secrets and variables → Actions → Repository secrets**. The workflow uses them to apply `supabase-schema.sql` and generate the browser config:
+Before deploying with shared storage, run `supabase-schema.sql` in **Supabase → SQL Editor**. Then add these repository secrets in **Settings → Secrets and variables → Actions → Repository secrets**:
 
 - `supabase_url` — the Supabase **Project URL** from **Project Settings → API**.
 - `supabase_anonpublic` — the Supabase **anon public** key from **Project Settings → API**.
 - `supabase_db_url` — the Supabase database connection string from database settings, used only by GitHub Actions to apply `supabase-schema.sql` before deploy.
 
-The workflow validates that all secrets are present, applies `supabase-schema.sql` with `supabase_db_url`, writes `supabase-config.js` only inside the deployment artifact, and then publishes the site. Never place a Supabase `service_role` key in this repository or in any browser-delivered file.
+The workflow validates that the secrets are present, applies `supabase-schema.sql` with `supabase_db_url`, writes `supabase-config.js` only inside the deployment artifact, and then publishes the site. Never place a Supabase `service_role` key in this repository or in any browser-delivered file.
 
 For local testing only, copy `supabase-config.example.js` to `supabase-config.js` and fill in the public Project URL and anon key. The real local config remains ignored by Git.

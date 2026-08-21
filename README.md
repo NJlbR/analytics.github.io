@@ -9,7 +9,7 @@
 
 1. Создайте проект на [supabase.com](https://supabase.com/).
 2. Откройте проект и перейдите в **SQL Editor**.
-3. Скопируйте и выполните SQL из файла `supabase-schema.sql`.
+3. Скопируйте и выполните SQL из файла `supabase-schema.sql` (workflow также применит эту схему при deploy через `supabase_db_url`).
 4. Откройте **Project Settings → API** и скопируйте **Project URL** и **anon public** key.
 5. В GitHub откройте **Settings → Secrets and variables → Actions → Repository secrets** и добавьте ровно эти secrets:
    - `supabase_url` — Supabase **Project URL**;
