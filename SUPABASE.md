@@ -2,24 +2,17 @@
 
 The site can use Supabase as shared storage while keeping browser `localStorage` as a fallback for local/demo use.
 
-## 1. Create the database schema
+## 1. Add repository secrets
 
-1. Open your Supabase project.
-2. Go to **SQL Editor**.
-3. Run the full contents of `supabase-schema.sql`. The last line reloads the PostgREST schema cache, which fixes the Supabase error `Could not find the table ... in the schema cache` after new tables are created.
-
-## 2. Add repository secrets
-
-Open the GitHub repository and go to **Settings → Secrets and variables → Actions → Repository secrets**.
-
-Add exactly these secrets:
+The production deploy applies `supabase-schema.sql` automatically before publishing the site, so GitHub Actions needs both browser-safe API values and a server-side database connection string. Open the GitHub repository and go to **Settings → Secrets and variables → Actions → Repository secrets**. Add exactly these secrets:
 
 - `supabase_url` — the Supabase **Project URL** from **Project Settings → API**.
 - `supabase_anonpublic` — the Supabase **anon public** key from **Project Settings → API**.
+- Optional: `supabase_db_url` — the Supabase database connection string from database settings. If present, GitHub Actions applies `supabase-schema.sql` before deploy; if absent, run the schema manually in SQL Editor.
 
 Do not add or expose the `service_role` key. It bypasses Row Level Security and must never be delivered to a browser.
 
-## 3. Deploy with GitHub Actions
+## 2. Deploy with GitHub Actions
 
 Because repository secrets are only available to workflows, GitHub Pages must use the workflow in `.github/workflows/deploy-pages.yml` rather than **Deploy from a branch**.
 
@@ -27,7 +20,7 @@ Because repository secrets are only available to workflows, GitHub Pages must us
 2. Set **Build and deployment → Source** to **GitHub Actions**.
 3. Push to `main` or run **Deploy GitHub Pages** manually from the **Actions** tab.
 
-The workflow reads `supabase_url` and `supabase_anonpublic` from repository secrets, validates that both are present, generates `supabase-config.js` only inside the deployment artifact, and deploys it to Pages. Do not commit a real `supabase-config.js`: browser code cannot read GitHub repository secrets directly at runtime, so the Actions-generated file is the bridge between secrets and the static site.
+The workflow validates `supabase_url` and `supabase_anonpublic`, optionally applies `supabase-schema.sql` when `supabase_db_url` is configured, generates `supabase-config.js` only inside the deployment artifact, and deploys it to Pages. Do not commit a real `supabase-config.js`: browser code cannot read GitHub repository secrets directly at runtime, so the Actions-generated file is the bridge between secrets and the static site.
 
 ## Local development
 

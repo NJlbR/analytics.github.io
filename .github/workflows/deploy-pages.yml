@@ -24,6 +24,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Apply Supabase schema when database secret exists
+        env:
+          SUPABASE_DB_URL: ${{ secrets.supabase_db_url }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "Repository secret supabase_db_url is not configured; skipping automatic schema setup. Run supabase-schema.sql manually in Supabase SQL Editor."
+            exit 0
+          fi
+
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase-schema.sql
+
       - name: Create Supabase config from repository secrets
         env:
           SUPABASE_URL: ${{ secrets.supabase_url }}
@@ -44,6 +60,42 @@ jobs:
             'supabase-config.js',
             `window.SOCIOPAIRS_SUPABASE = ${JSON.stringify(config, null, 2)};\n`,
           );
+          NODE
+
+      - name: Check Supabase table visibility
+        env:
+          SUPABASE_URL: ${{ secrets.supabase_url }}
+          SUPABASE_ANON_KEY: ${{ secrets.supabase_anonpublic }}
+        run: |
+          node <<'NODE'
+          const tables = ['sociopairs_users', 'sociopairs_surveys'];
+          const headers = {
+            apikey: process.env.SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          };
+          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+          async function main() {
+            for (let attempt = 1; attempt <= 6; attempt += 1) {
+              const results = await Promise.all(tables.map(async (table) => {
+                const url = `${process.env.SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${table}?select=*&limit=1`;
+                const response = await fetch(url, { headers });
+                return { table, ok: response.ok, status: response.status, body: await response.text() };
+              }));
+              if (results.every((result) => result.ok)) return;
+              if (attempt === 6) {
+                console.warn('Supabase anon API cannot see required tables yet. The site will still deploy; run the full supabase-schema.sql in the same project as supabase_url and ensure API settings expose the public schema.');
+                console.warn(JSON.stringify(results, null, 2));
+                return;
+              }
+              await sleep(5000);
+            }
+          }
+
+          main().catch((error) => {
+            console.warn('Skipping Supabase table visibility check after an unexpected error.');
+            console.warn(error);
+          });
           NODE
 
       - name: Configure Pages

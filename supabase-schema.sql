@@ -55,4 +55,10 @@ drop policy if exists "sociopairs_surveys_insert" on public.sociopairs_surveys;
 create policy "sociopairs_surveys_insert" on public.sociopairs_surveys for insert to anon, authenticated with check (true);
 
 -- Fixes "Could not find the table ... in the schema cache" right after creating tables.
-notify pgrst, 'reload schema';
+-- Supabase/PostgREST listens for this notification and refreshes its schema cache.
+select pg_notify('pgrst', 'reload schema');
+
+-- Make SQL Editor show a clear success row after the schema is created.
+select
+  to_regclass('public.sociopairs_users') as sociopairs_users_table,
+  to_regclass('public.sociopairs_surveys') as sociopairs_surveys_table;
