@@ -62,6 +62,42 @@ jobs:
           );
           NODE
 
+      - name: Verify Supabase tables are visible to anon API
+        env:
+          SUPABASE_URL: ${{ secrets.supabase_url }}
+          SUPABASE_ANON_KEY: ${{ secrets.supabase_anonpublic }}
+        run: |
+          node <<'NODE'
+          const tables = ['sociopairs_users', 'sociopairs_surveys'];
+          const headers = {
+            apikey: process.env.SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          };
+          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+          async function main() {
+            for (let attempt = 1; attempt <= 6; attempt += 1) {
+              const results = await Promise.all(tables.map(async (table) => {
+                const url = `${process.env.SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${table}?select=*&limit=1`;
+                const response = await fetch(url, { headers });
+                return { table, ok: response.ok, status: response.status, body: await response.text() };
+              }));
+              if (results.every((result) => result.ok)) return;
+              if (attempt === 6) {
+                console.error('Supabase anon API cannot see required tables. Run the full supabase-schema.sql in the same project as supabase_url and ensure API settings expose the public schema.');
+                console.error(JSON.stringify(results, null, 2));
+                process.exit(1);
+              }
+              await sleep(5000);
+            }
+          }
+
+          main().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
