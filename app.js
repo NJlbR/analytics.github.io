@@ -111,7 +111,17 @@ function renderSurvey(user) { const section = document.querySelector('#surveySec
 function renderAdmin(state, user) { const section = document.querySelector('#adminSection'); section.classList.add('hidden'); section.innerHTML = user?.isAdmin ? `<article class="card"><h2>Админ-панель</h2><p>Усреднённые данные по всем аккаунтам, включая администратора.</p>${statsMarkup(state.surveys)}<div class="stats"><div class="stat"><span>Среднее число понравившихся в день на пользователя</span><strong>${averageLikesPerUserPerDay(state)}</strong></div></div><h3>Среднее число понравившихся по дням</h3>${averageLikesChartMarkup(state)}<h3>Сколько понравившихся добавляли по дням</h3>${dailyStatsMarkup(state.surveys)}<h3>Все анкеты</h3>${tableMarkup(state.surveys)}</article>` : ''; }
 
 function storageErrorMessage(error) {
-  const setupHint = 'Откройте тот же Supabase-проект, который указан в repository secret supabase_url, выполните весь файл supabase-schema.sql, затем заново запустите деплой GitHub Pages и обновите страницу.';
+  const setupHint = 'Откройте Supabase → SQL Editor, выполните весь файл supabase-schema.sql, затем обновите страницу.';
+  if (error?.code === 'PGRST205' || error?.message?.includes('schema cache') || error?.message?.includes('sociopairs_users')) {
+    return `Таблицы Supabase ещё не созданы или не попали в schema cache. ${setupHint}`;
+  }
+  if (error?.code === '42501' || error?.message?.toLowerCase().includes('permission')) {
+    return `У anon key нет прав на таблицы. Выполните актуальный supabase-schema.sql целиком. ${setupHint}`;
+  }
+  return error?.message || 'Неизвестная ошибка Supabase.';
+}
+async function render() { try { const state = await loadState(); const user = currentUser ? userByName(state, currentUser) : null; if (currentUser && !user) return setCurrentUser(''); renderStatus(); renderNav(user); renderAuth(user); renderProfile(state, user); renderSurvey(user); renderAdmin(state, user); } catch (error) { dataStatus = `Ошибка подключения к хранилищу: ${storageErrorMessage(error)}`; renderStatus(); } }
+async function runAction(action) { try { await action(); await render(); } catch (error) { alert(`Ошибка сохранения данных: ${storageErrorMessage(error)}`); } }
   if (error?.code === 'PGRST205' || error?.message?.includes('schema cache') || error?.message?.includes('sociopairs_users')) {
     return `PostgREST не видит таблицы sociopairs в проекте, к которому подключён сайт. Если SQL уже выполнен, чаще всего repository secrets supabase_url и supabase_anonpublic указывают на другой Supabase-проект или сайт ещё не был redeploy после изменения secrets. ${setupHint}`;
   }
