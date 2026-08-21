@@ -1,16 +1,19 @@
 # GitHub Pages deployment
 
-This repository is a static GitHub Pages site: `index.html`, `app.js`, `styles.css`, and `.nojekyll` live at the repository root.
+This repository is a static GitHub Pages site: `index.html`, `app.js`, `styles.css`, and `.nojekyll` live at the repository root. `supabase-config.js` is generated during deployment from repository secrets.
 
-To publish without a custom workflow:
+To publish with repository secrets:
 
-1. Open **Settings → Pages** in the GitHub repository.
-2. Under **Build and deployment**, choose **Deploy from a branch**.
-3. Select the branch that contains the site and choose **/(root)** as the folder.
-4. Save the settings.
+1. Open **Settings → Secrets and variables → Actions** in the GitHub repository.
+2. Add `supabase_url` with the Supabase Project URL.
+3. Add `supabase_anonpublic` with the Supabase anon public key.
+4. Open **Settings → Pages** and choose **GitHub Actions** as the source.
+5. Push to `main` or run **Deploy GitHub Pages** manually from the Actions tab.
 
 The `.nojekyll` file disables Jekyll processing so GitHub Pages serves the static files as-is.
 
-## Data model caveat
+## Supabase data storage
 
-The app is a client-side prototype. Users, username uniqueness checks, survey answers, and aggregate statistics are stored in the current browser's `localStorage`. A real multi-user research deployment needs a shared backend database or backend-as-a-service.
+Before deploying with shared storage, run `supabase-schema.sql` in **Supabase → SQL Editor**. The workflow writes `supabase-config.js` from the `supabase_url` and `supabase_anonpublic` repository secrets during deployment.
+
+Never place a Supabase `service_role` key in this repository or in any browser-delivered file. For local testing, copy `supabase-config.example.js` to `supabase-config.js`; the real local config file is ignored by Git.
