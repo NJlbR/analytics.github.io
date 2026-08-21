@@ -50,4 +50,10 @@ th { color: var(--muted); font-size: .85rem; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
 .stat { padding: 16px; border-radius: 18px; background: #f7f9ff; border: 1px solid var(--line); }
 .stat strong { display: block; font-size: 1.25rem; margin-top: 4px; }
-@media (max-width: 720px) { .topbar, .hero { flex-direction: column; align-items: stretch; } }
+.chart { display: grid; gap: 12px; margin: 16px 0 24px; }
+.chart-row { display: grid; grid-template-columns: minmax(90px, 130px) 1fr auto; gap: 12px; align-items: center; }
+.chart-label { color: var(--muted); font-size: .9rem; }
+.chart-track { min-height: 16px; overflow: hidden; border-radius: 999px; background: #e9edff; border: 1px solid var(--line); }
+.chart-bar { height: 100%; min-height: 16px; border-radius: inherit; background: linear-gradient(90deg, var(--accent), #8f98ff); }
+.chart-row strong { color: var(--accent-dark); }
+@media (max-width: 720px) { .topbar, .hero { flex-direction: column; align-items: stretch; } .chart-row { grid-template-columns: 1fr; gap: 6px; } }
