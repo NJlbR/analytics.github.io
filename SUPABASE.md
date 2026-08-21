@@ -8,7 +8,7 @@ The production deploy applies `supabase-schema.sql` automatically before publish
 
 - `supabase_url` — the Supabase **Project URL** from **Project Settings → API**.
 - `supabase_anonpublic` — the Supabase **anon public** key from **Project Settings → API**.
-- `supabase_db_url` — the Supabase database connection string from database settings, used only by GitHub Actions to apply `supabase-schema.sql` before deploy.
+- Optional: `supabase_db_url` — the Supabase database connection string from database settings. If present, GitHub Actions applies `supabase-schema.sql` before deploy; if absent, run the schema manually in SQL Editor.
 
 Do not add or expose the `service_role` key. It bypasses Row Level Security and must never be delivered to a browser.
 
@@ -20,7 +20,7 @@ Because repository secrets are only available to workflows, GitHub Pages must us
 2. Set **Build and deployment → Source** to **GitHub Actions**.
 3. Push to `main` or run **Deploy GitHub Pages** manually from the **Actions** tab.
 
-The workflow reads repository secrets, applies `supabase-schema.sql` through `supabase_db_url` before publish, validates that `supabase_url` and `supabase_anonpublic` are present, generates `supabase-config.js` only inside the deployment artifact, and deploys it to Pages. Do not commit a real `supabase-config.js`: browser code cannot read GitHub repository secrets directly at runtime, so the Actions-generated file is the bridge between secrets and the static site.
+The workflow validates `supabase_url` and `supabase_anonpublic`, optionally applies `supabase-schema.sql` when `supabase_db_url` is configured, generates `supabase-config.js` only inside the deployment artifact, and deploys it to Pages. Do not commit a real `supabase-config.js`: browser code cannot read GitHub repository secrets directly at runtime, so the Actions-generated file is the bridge between secrets and the static site.
 
 ## Local development
 

@@ -24,13 +24,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Apply Supabase schema from repository secret
+      - name: Apply Supabase schema when database secret exists
         env:
           SUPABASE_DB_URL: ${{ secrets.supabase_db_url }}
         run: |
           if [ -z "$SUPABASE_DB_URL" ]; then
-            echo "Repository secret supabase_db_url must be configured so the deploy can create/update sociopairs tables before publishing." >&2
-            exit 1
+            echo "Repository secret supabase_db_url is not configured; skipping automatic schema setup. Run supabase-schema.sql manually in Supabase SQL Editor."
+            exit 0
           fi
 
           if ! command -v psql >/dev/null 2>&1; then
