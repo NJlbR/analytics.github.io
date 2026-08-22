@@ -20,7 +20,7 @@ Because repository secrets are only available to workflows, GitHub Pages must us
 2. Set **Build and deployment → Source** to **GitHub Actions**.
 3. Push to `main` or run **Deploy GitHub Pages** manually from the **Actions** tab.
 
-The workflow validates `supabase_url` and `supabase_anonpublic`, optionally applies `supabase-schema.sql` when `supabase_db_url` is configured, generates `supabase-config.js` only inside the deployment artifact, and deploys it to Pages. Do not commit a real `supabase-config.js`: browser code cannot read GitHub repository secrets directly at runtime, so the Actions-generated file is the bridge between secrets and the static site.
+The workflow validates `supabase_url` and `supabase_anonpublic`, optionally applies `supabase-schema.sql` when `supabase_db_url` is configured, generates `supabase-config.js` only inside the deployment artifact, and deploys it to Pages. It does not make the Pages deployment depend on a live anon-API table check: a temporary Supabase/API availability problem must not prevent the static site from publishing. Do not commit a real `supabase-config.js`: browser code cannot read GitHub repository secrets directly at runtime, so the Actions-generated file is the bridge between secrets and the static site.
 
 ## Local development
 
